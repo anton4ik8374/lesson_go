@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -18,12 +19,11 @@ var romeToArab = map[string]int{
 	"X": 10,
 }
 
-// Карта для арабских цифр в римские срез наполненный структурами
+// Структура для перевода арабских в римские
 var arabToRome = []struct {
 	dec    int
 	symbol string
 }{
-	{1000, "M"}, {900, "CM"}, {500, "D"}, {400, "CD"},
 	{100, "C"}, {90, "XC"}, {50, "L"}, {40, "XL"},
 	{10, "X"}, {9, "IX"}, {5, "V"}, {4, "IV"}, {1, "I"},
 }
@@ -31,16 +31,21 @@ var arabToRome = []struct {
 func main() {
 
 	reader := bufio.NewReader(os.Stdin)
-
+	regex := regexp.MustCompile(`^[0-9AIXCLV]{1,4} [*+-/] [0-9AIXCLV]{1,4}$`)
 	for {
+		//Сбрасываем режимы на каждом вводе т.к. они глобальны
+		modeRome = false
+		modeArab = false
+
 		fmt.Println("Введите значение (Калькулятор умеет выполнять операции (+, -, *, /) с двумя числами)")
 		text, _ := reader.ReadString('\n')         //Ждём ввода данных в формате строки
 		text = strings.Replace(text, "\n", "", -1) //Очищаем все пустоты пробелы табуляции
 		arrValues := strings.Split(text, " ")
-		if len(arrValues) == 3 {
+
+		if regex.MatchString(text) && len(arrValues) == 3 {
 			calculations(arrValues[0], arrValues[1], arrValues[2])
 		} else {
-			sentPanic("Не корректный ввод!")
+			sentPanic("Выдача паники, так как формат математической операции не удовлетворяет заданию — два операнда и один оператор (+, -, /, *).")
 		}
 
 	}
@@ -48,9 +53,10 @@ func main() {
 
 func calculations(val1 string, sign string, val2 string) {
 	var next = make([]bool, 2)
+	regexRome := regexp.MustCompile(`^[AIXCLV]{1,4}$`)
 	var parsVal1, parsVal2 int
 	var err error
-	if romeToArab[val1] != 0 {
+	if regexRome.MatchString(val1) && romeToArab[val1] != 0 {
 		modeRome = true
 		parsVal1 = romeToArab[val1]
 		next[0] = validationNumber(romeToArab[val1], val1, nil)
@@ -59,7 +65,7 @@ func calculations(val1 string, sign string, val2 string) {
 		parsVal1, err = strconv.Atoi(val1) //Преобразуем строку в число
 		next[0] = validationNumber(parsVal1, val1, err)
 	}
-	if romeToArab[val2] != 0 {
+	if regexRome.MatchString(val2) && romeToArab[val2] != 0 {
 		modeRome = true
 		parsVal2 = romeToArab[val2]
 		next[1] = validationNumber(romeToArab[val2], val2, nil)
@@ -69,20 +75,29 @@ func calculations(val1 string, sign string, val2 string) {
 		next[1] = validationNumber(parsVal2, val2, err)
 	}
 	if modeArab && modeRome {
-		sentPanic("Калькулятор умеет работать только с арабскими или римскими цифрами одновременно")
+		sentPanic("Выдача паники, так как используются одновременно разные системы счисления.")
 	}
 	if next[0] && next[1] {
 		switch sign {
 		case "+":
 			output(parsVal1 + parsVal2)
 		case "-":
-			output(parsVal1 - parsVal2)
+			val := parsVal1 - parsVal2
+			if modeRome {
+				if val > 0 {
+					output(val)
+				} else {
+					sentPanic("Выдача паники, так как в римской системе нет отрицательных чисел.")
+				}
+			} else {
+				output(val)
+			}
 		case "*":
 			output(parsVal1 * parsVal2)
 		case "/":
 			output(parsVal1 / parsVal2)
 		default:
-			sentPanic("Арифметическая операция не опознана!")
+			sentPanic("Выдача паники, так как строка не является математической операцией.")
 		}
 	}
 
@@ -92,11 +107,7 @@ func output(val int) {
 	if modeRome {
 		fmt.Println(transformToRome(val))
 	} else {
-		if val > 0 {
-			fmt.Println(val)
-		} else {
-			sentPanic("Результатом работы калькулятора с арабскими числами могут быть отрицательные числа и ноль. Результатом работы калькулятора с римскими числами могут быть только положительные числа")
-		}
+		fmt.Println(val)
 	}
 }
 
@@ -107,7 +118,7 @@ func validationNumber(num int, original string, err error) bool {
 		sendError(original, "%w Калькулятор умеет работать только с целыми числами. Вы ввели (%s)\n")
 	} else if err != nil {
 		result = false
-		sentPanic("Не подходящее число!")
+		sentPanic("Паника не подходящее число!")
 	} else if num > 10 {
 		result = false
 		sendError(original, "%w допустимое максимальное число 10 вы ввели (%s)\n")
@@ -131,6 +142,7 @@ func sentPanic(message string) {
 	err := errors.New(message)
 	panic(err)
 }
+
 func transformToRome(num int) string {
 	result := ""
 	for _, item := range arabToRome {
