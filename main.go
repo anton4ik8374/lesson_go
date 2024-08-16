@@ -31,23 +31,42 @@ var arabToRome = []struct {
 func main() {
 
 	reader := bufio.NewReader(os.Stdin)
-	regex := regexp.MustCompile(`^[0-9AIXCLV]{1,4} [*+-/] [0-9AIXCLV]{1,4}$`)
+	regex := regexp.MustCompile(`^[0-9AIXCLV]{1,4}[*+-/][0-9AIXCLV]{1,4}$`)
 	for {
-		//Сбрасываем режимы на каждом вводе т.к. они глобальны
+		//Сбрасываем режимы на каждом вводе
 		modeRome = false
 		modeArab = false
 
 		fmt.Println("Введите значение (Калькулятор умеет выполнять операции (+, -, *, /) с двумя числами)")
 		text, _ := reader.ReadString('\n')         //Ждём ввода данных в формате строки
 		text = strings.Replace(text, "\n", "", -1) //Очищаем все пустоты пробелы табуляции
-		arrValues := strings.Split(text, " ")
+		text = strings.Replace(text, " ", "", -1)  //Очищаем все пустоты пробелы табуляции
+		var separator, success = searchSeparator(text)
 
-		if regex.MatchString(text) && len(arrValues) == 3 {
-			calculations(arrValues[0], arrValues[1], arrValues[2])
+		if regex.MatchString(text) && success {
+			arrValues := strings.Split(text, separator)
+			calculations(arrValues[0], separator, arrValues[1])
 		} else {
+			success = false
+		}
+		if !success {
 			sentPanic("Выдача паники, так как формат математической операции не удовлетворяет заданию — два операнда и один оператор (+, -, /, *).")
 		}
 
+	}
+}
+
+func searchSeparator(data string) (string, bool) {
+	if strings.Index(data, "*") != -1 {
+		return "*", true
+	} else if strings.Index(data, "/") != -1 {
+		return "/", true
+	} else if strings.Index(data, "+") != -1 {
+		return "+", true
+	} else if strings.Index(data, "-") != -1 {
+		return "-", true
+	} else {
+		return "", false
 	}
 }
 
