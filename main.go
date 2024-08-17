@@ -105,16 +105,7 @@ func calculations(val1 string, sign string, val2 string) {
 		case "+":
 			output(parsVal1 + parsVal2)
 		case "-":
-			val := parsVal1 - parsVal2
-			if modeRome {
-				if val > 0 {
-					output(val)
-				} else {
-					sentPanic("Выдача паники, так как в римской системе нет отрицательных чисел.")
-				}
-			} else {
-				output(val)
-			}
+			output(parsVal1 + parsVal2)
 		case "*":
 			output(parsVal1 * parsVal2)
 		case "/":
@@ -128,7 +119,11 @@ func calculations(val1 string, sign string, val2 string) {
 
 func output(val int) {
 	if modeRome {
-		fmt.Println(transformToRome(val))
+		if val > 0 {
+			fmt.Println(transformToRome(val))
+		} else {
+			sentPanic("Выдача паники, так как в римской системе нет отрицательных чисел.")
+		}
 	} else {
 		fmt.Println(val)
 	}
