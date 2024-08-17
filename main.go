@@ -93,6 +93,10 @@ func calculations(val1 string, sign string, val2 string) {
 		parsVal2, err = strconv.Atoi(val2) //Преобразуем строку в число
 		next[1] = validationNumber(parsVal2, val2, err)
 	}
+	if parsVal1 == 0 || parsVal2 == 0 {
+		sentPanic("Выдача паники, Калькулятор принимает на вход тоько числа от (1 до 10) (I до X)")
+	}
+
 	if modeArab && modeRome {
 		sentPanic("Выдача паники, так как используются одновременно разные системы счисления.")
 	}
