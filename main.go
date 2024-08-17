@@ -38,9 +38,9 @@ func main() {
 		modeArab = false
 
 		fmt.Println("Введите значение (Калькулятор умеет выполнять операции (+, -, *, /) с двумя числами)")
-		text, _ := reader.ReadString('\n')         //Ждём ввода данных в формате строки
-		text = strings.Replace(text, "\n", "", -1) //Очищаем все пустоты пробелы табуляции
-		text = strings.Replace(text, " ", "", -1)  //Очищаем все пустоты пробелы табуляции
+		text, _ := reader.ReadString('\n') //Ждём ввода данных в формате строки
+		text = strings.TrimRight(text, "\n\r")
+		text = strings.Replace(text, " ", "", -1)
 		var separator, success = searchSeparator(text)
 
 		if regex.MatchString(text) && success {
@@ -57,13 +57,13 @@ func main() {
 }
 
 func searchSeparator(data string) (string, bool) {
-	if strings.Index(data, "*") != -1 {
+	if strings.Contains(data, "*") {
 		return "*", true
-	} else if strings.Index(data, "/") != -1 {
+	} else if strings.Contains(data, "/") {
 		return "/", true
-	} else if strings.Index(data, "+") != -1 {
+	} else if strings.Contains(data, "+") {
 		return "+", true
-	} else if strings.Index(data, "-") != -1 {
+	} else if strings.Contains(data, "-") {
 		return "-", true
 	} else {
 		return "", false
@@ -149,7 +149,7 @@ func sendError(val string, message string) {
 	if message == "" {
 		message = "%w Вы ввели некорректное значение (%s)\n"
 	}
-	err := errors.New("Возникла ошибка:")
+	err := errors.New("возникла ошибка ")
 	err = fmt.Errorf(message, err, val)
 	fmt.Print(err)
 }
